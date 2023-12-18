@@ -5,6 +5,7 @@
       <option name="ignoredIdentifiers">
         <list>
           <option value="server.src.socket.connection.List" />
+          <option value="server.src.routes.chat.WebSocketDisconnect" />
         </list>
       </option>
     </inspection_tool>

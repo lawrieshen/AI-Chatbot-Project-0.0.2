@@ -1,10 +1,11 @@
 import os
-from http.client import HTTPException
-
 import uuid
-from fastapi import APIRouter, FastAPI, WebSocket, Request
+from fastapi import APIRouter, FastAPI, WebSocket, WebSocketDisconnect, Request, Depends, HTTPException
+from ..socket.connection import ConnectionManager
+from ..socket.utils import get_token
 
 chat = APIRouter()
+manager = ConnectionManager()
 
 # @route   POST /token
 # @desc    Route to generate chat token
@@ -38,5 +39,13 @@ async def refresh_token(request: Request):
 # @access  Public
 
 @chat.websocket("/chat")
-async def websocket_endpoint(websocket: WebSocket = WebSocket):
-    return None
+async def websocket_endpoint(websocket: WebSocket, token: str = Depends(get_token)):
+    await manager.connect(websocket)
+    try:
+        while True:
+            data = await websocket.receive_text()
+            print(data)
+            await manager.send_personal_message(f"Response: Simulating response from the GPT service", websocket)
+
+    except WebSocketDisconnect:
+        manager.disconnect(websocket)
