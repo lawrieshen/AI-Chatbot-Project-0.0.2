@@ -2,10 +2,12 @@ from fastapi import FastAPI, Request
 import uvicorn
 import os
 from dotenv import load_dotenv
+from src.routes.chat import chat
 
 load_dotenv()
 
 api = FastAPI()
+api.include_router(chat)
 
 
 @api.get("/test")
