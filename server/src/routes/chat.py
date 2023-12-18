@@ -13,9 +13,9 @@ chat = APIRouter()
 
 @chat.post("/token")
 async def token_generator(name: str, request: Request):
-
     if name == "":
-        raise HTTPException(status_code=400, detail={"loc": "name", "msg": "Enter a valid name"})
+        raise HTTPException(status_code=400, detail={
+            "loc": "name",  "msg": "Enter a valid name"})
 
     token = str(uuid.uuid4())
 
