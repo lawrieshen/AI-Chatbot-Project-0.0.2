@@ -61,7 +61,7 @@ async def refresh_token(request: Request):
 @chat.websocket("/chat")
 async def websocket_endpoint(websocket: WebSocket, token: str = Depends(get_token)):
     await manager.connect(websocket)
-    redis_client = await redis.creat_connection()
+    redis_client = await redis.create_connection()
     producer = Producer(redis_client)
     try:
         while True:
