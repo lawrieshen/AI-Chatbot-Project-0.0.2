@@ -34,8 +34,6 @@ async def main():
                     message = [v.decode('utf-8')
                                for k, v in message[1].items()][0]
 
-                    print(token)
-
                     # Create a new message instance and add to cache, specifying the source as human
                     msg = Message(msg=message)
 
