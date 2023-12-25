@@ -6,6 +6,7 @@ from src.redis.config import Redis
 from src.redis.stream import StreamConsumer
 import os
 from src.schema.chat import Message
+from src.redis.producer import Producer
 
 redis = Redis()
 
@@ -15,14 +16,14 @@ async def main():
     redis_client = await redis.create_connection()
     consumer = StreamConsumer(redis_client)
     cache = Cache(json_client)
+    producer = Producer(redis_client)
 
     print("Stream consumer started")
     print("Stream waiting for new messages")
 
     while True:
         response = await consumer.consume_stream(stream_channel="message_channel", count=1, block=0)
-        print('Schema of response')
-        print(response)
+
         if response:
             for stream, messages in response:
                 # Get message from stream, and extract token, message id
@@ -55,7 +56,10 @@ async def main():
                         msg=res
                     )
 
-                    print(msg)
+                    stream_data = {}
+                    stream_data[str(token)] = str(msg.model_dump())
+
+                    await producer.add_to_stream(stream_data, "response_channel")
 
                     await cache.add_message_to_cache(token=token, source='bot', message_data=msg.model_dump())
 
