@@ -3,7 +3,7 @@ from rejson import Path
 
 
 class Cache:
-    def __inti__(self, json_client):
+    def __init__(self, json_client):
         self.json_client = json_client
 
     async def get_chat_history(self, token: str):
