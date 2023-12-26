@@ -94,7 +94,7 @@ async def websocket_endpoint(websocket: WebSocket, token: str = Depends(get_toke
                         response_message = [v.decode('utf-8')
                                             for k, v in message[1].items()][0]
 
-                        print(message[0]).decode('utf-8')
+                        #print(message[0]).decode('utf-8')
                         print(token)
                         print(response_token)
 
