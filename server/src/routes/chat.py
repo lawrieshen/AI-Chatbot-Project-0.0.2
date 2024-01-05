@@ -1,4 +1,7 @@
+import asyncio
 import os
+import sys
+import time
 import uuid
 from fastapi import APIRouter, FastAPI, WebSocket, WebSocketDisconnect, Request, Depends, HTTPException
 from ..socket.connection import ConnectionManager
@@ -9,6 +12,7 @@ from ..schema.chat import Chat
 from rejson import Path
 from ..redis.stream import StreamConsumer
 from ..redis.cache import Cache
+from threading import Timer
 
 chat = APIRouter()
 manager = ConnectionManager()
@@ -42,7 +46,7 @@ async def token_generator(name: str, request: Request):
 
     # Set a timeout for redis data
     redis_client = await redis.create_connection()
-    await redis_client.expire(str(token), 86400)
+    await redis_client.expire(str(token), 3600)
 
     return chat_session.dict()
 
@@ -71,7 +75,7 @@ async def refresh_token(request: Request, token: str):
 # @access  Public
 
 @chat.websocket("/chat")
-async def websocket_endpoint(websocket: WebSocket, token: str = Depends(get_token)):
+async def websocket_endpoint(websocket: WebSocket, token: str = Depends(get_token), validity=None):
     await manager.connect(websocket)
     redis_client = await redis.create_connection()
     producer = Producer(redis_client)
@@ -82,9 +86,10 @@ async def websocket_endpoint(websocket: WebSocket, token: str = Depends(get_toke
             data = await websocket.receive_text()
             stream_data = {token: data}
             await producer.add_to_stream(stream_data, "message_channel")
+            # worker.py detected new messages then put the response back to the response_channel
+            await asyncio.sleep(0.5)
             response = await consumer.consume_stream(stream_channel="response_channel", block=0)
 
-            print(response)
             for stream, messages in response:
                 for message in messages:
                     response_token = [k.decode('utf-8')
@@ -93,10 +98,6 @@ async def websocket_endpoint(websocket: WebSocket, token: str = Depends(get_toke
                     if token == response_token:
                         response_message = [v.decode('utf-8')
                                             for k, v in message[1].items()][0]
-
-                        #print(message[0]).decode('utf-8')
-                        print(token)
-                        print(response_token)
 
                         await manager.send_personal_message(response_message, websocket)
 
